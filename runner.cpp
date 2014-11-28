@@ -1,8 +1,13 @@
+#include "ast.h"
 #include "parser.h"
+#include "lexer.h"
 
 static void HandleDefinition() {
-  if (ParseDefinition()) {
-    fprintf(stderr, "Parsed a function definition.\n");
+  if (FunctionAST *f = ParseDefinition()) {
+    if (llvm::Function *fn = f->Codegen()) {
+      fprintf(stderr, "Parsed a function definition.\n");
+      fn->dump();
+    }
   } else {
     // Skip token for error recovery.
     getNextToken();
@@ -10,8 +15,11 @@ static void HandleDefinition() {
 }
 
 static void HandleExtern() {
-  if (ParseExtern()) {
-    fprintf(stderr, "Parsed an extern\n");
+  if (PrototypeAST *proto = ParseExtern()) {
+    if (llvm::Function *fn = proto->Codegen()) {
+      fprintf(stderr, "Parsed an extern\n");
+      fn->dump();
+    }
   } else {
     // Skip token for error recovery.
     getNextToken();
@@ -20,10 +28,12 @@ static void HandleExtern() {
 
 static void HandleTopLevelExpression() {
   // Evaluate a top-level expression into an anonymous function.
-  if (ParseTopLevelExpr()) {
-    fprintf(stderr, "Parsed a top-level expr\n");
+  if (FunctionAST *f = ParseTopLevelExpr()) {
+    if (llvm::Function *fn = f->Codegen()) {
+      fprintf(stderr, "Parsed a top-level expr\n");
+      fn->dump();
+    }
   } else {
-    // Skip token for error recovery.
     getNextToken();
   }
 }
@@ -51,8 +61,11 @@ int main() {
   fprintf(stderr, "ready> ");
   getNextToken();
 
+  module = new llvm::Module("My cool JIT", llvm::getGlobalContext());
   // Run the main "interpreter loop" now.
   mainLoop();
+
+  module->dump();
 
   return 0;
 }
