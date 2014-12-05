@@ -51,6 +51,11 @@ static void mainLoop() {
   }
 }
 
+extern "C" double putchard(double c) {
+  putchar((char)c);
+  return 0;
+}
+
 int main() {
   BinopPrecedence['<'] = 10;
   BinopPrecedence['+'] = 20;
